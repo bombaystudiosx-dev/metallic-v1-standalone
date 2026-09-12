@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+data/mv1-tasks
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+coverage
+*.log
+.DS_Store

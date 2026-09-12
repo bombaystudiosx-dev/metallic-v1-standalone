@@ -1,0 +1,13 @@
+import { FormEvent, useEffect, useState } from 'react';
+import { Bot, Plus, Trash2 } from 'lucide-react';
+import PageShell from '../components/PageShell';
+
+type Agent = { id: string; name: string; task: string; schedule: string; enabled: boolean; runs: number };
+const key = 'metallic.agents.v1';
+export default function RemoteAgent() {
+  const [agents, setAgents] = useState<Agent[]>(() => { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; } });
+  const [draft, setDraft] = useState({ name: '', task: '', schedule: 'once' });
+  useEffect(() => localStorage.setItem(key, JSON.stringify(agents)), [agents]);
+  const add = (e: FormEvent) => { e.preventDefault(); if (!draft.name.trim() || !draft.task.trim()) return; setAgents((items) => [{ id: crypto.randomUUID(), ...draft, enabled: true, runs: 0 }, ...items]); setDraft({ name: '', task: '', schedule: 'once' }); };
+  return <PageShell title="Remote Agents" accent="purple"><section className="stats"><div><strong>{agents.length}</strong><span>Total Agents</span></div><div><strong>{agents.filter((a) => a.enabled).length}</strong><span>Running</span></div><div><strong>{agents.reduce((n, a) => n + a.runs, 0)}</strong><span>Tasks Completed</span></div></section><div className="agents-layout"><form className="agent-form" onSubmit={add}><h2><Plus size={18} />Deploy New Agent</h2><input placeholder="Agent name..." value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /><textarea placeholder="Task description..." value={draft.task} onChange={(e) => setDraft({ ...draft, task: e.target.value })} /><select value={draft.schedule} onChange={(e) => setDraft({ ...draft, schedule: e.target.value })}><option value="once">Run Once</option><option value="hourly">Hourly</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select><button>Deploy Agent</button></form><section className="agent-list">{agents.length === 0 ? <div className="empty-agent"><Bot size={35} /><h2>No agents deployed</h2><p>Create an agent definition to begin.</p></div> : agents.map((agent) => <article key={agent.id}><div className="agent-icon"><Bot size={20} /></div><div><h3>{agent.name}</h3><p>{agent.task}</p><small>{agent.schedule} · {agent.runs} runs</small></div><button onClick={() => setAgents((items) => items.map((item) => item.id === agent.id ? { ...item, enabled: !item.enabled } : item))}>{agent.enabled ? 'Running' : 'Idle'}</button><button className="danger" onClick={() => setAgents((items) => items.filter((item) => item.id !== agent.id))} aria-label="Delete agent"><Trash2 size={15} /></button></article>)}</section></div></PageShell>;
+}
